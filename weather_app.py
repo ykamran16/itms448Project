@@ -19,13 +19,13 @@ def get_weather(city):
         pressure = main['pressure']
         humidity = main['humidity']
 
-        weather_descrip = data['weather'][0]['description']
+        weather_desc = data['weather'][0]['description']
 
         return {
             'Temperature': temperature,
             'Pressure': pressure,
             'Humidity': humidity,
-            'Weather Description': weather_descrip,
+            'Weather Description': weather_desc,
         }
 
     else:
@@ -45,11 +45,35 @@ def get_air_quality(city):
     else:
         return None
 
+#Fetch 3-day forecast data
+def get_forecast(city):
+    base_url = "http://api.openweathermap.org/data/2.5/forecast?"
+    complete_url = f"{base_url}q={city}&appid={WEATHER_API_KEY}&units=metric"
+    response = requests.get(complete_url)
+
+    if response.status_code == 200:
+        data = response.json()
+        forecast_list = data.get('list', [])[:3]  # Get the first 3 forecast entries, or an empty list
+        forecasts = []
+
+        for item in forecast_list:
+            # Use .get to safely access dictionary keys and set default values
+            temp = item.get('main', {}).get('temp', 'N/A')  # Default to 'N/A' if 'temp' is missing
+            weather_desc = item.get('weather', [{}])[0].get('description', 'Unknown')  # Safe default
+
+            forecasts.append({'Temperature': temp, 'Description': weather_desc})
+
+        return forecasts
+    else:
+        return None
+
+
 #Test the function with Chicago
 if __name__ == "__main__":
     city = "Chicago"
     weather_data = get_weather(city)
     air_quality_data = get_air_quality(city)
+    forecast_data = get_forecast(city)
 
     if weather_data:
         print(f"Weather in {city}:")
@@ -64,3 +88,10 @@ if __name__ == "__main__":
             print(f"Air Quality Index in {city}: {air_quality_data['Air Quality Index']}")
     else:
         print(f"Could not retrieve air quality data for {city}.")
+
+    if forecast_data:
+        print(f"3-Day Weather Forecast in {city}:")
+        for i, forecast in enumerate(forecast_data, 1):
+            print(f"Day {i}: Temperature {forecast['Temperature']} °C, Description: {forecast['Description']}")
+    else:
+        print(f"Could not retrieve weather forecast data for {city}.")
