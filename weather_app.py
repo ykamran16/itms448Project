@@ -3,6 +3,7 @@ from tkinter import messagebox
 import requests
 from datetime import datetime
 import pytz
+from timezonefinder import TimezoneFinder
 
 #OpenWeather API Key
 WEATHER_API_KEY = "4280cf0c7e000e8ae9a42913aa06e1c5"
@@ -119,15 +120,27 @@ def get_sunrise_sunset(latitude, longitude):
         sunset_utc = data['results']['sunset'] # UTC sunset time
 
         # Convert UTC times to datetime
-        sunrise_datetime = datetime.fromisoformat(sunrise_utc.replace("Z", "+00:00"))
-        sunset_datetime = datetime.fromisoformat(sunset_utc.replace("Z", "+00:00"))
+        sunrise_dt = datetime.fromisoformat(sunrise_utc.replace("Z", "+00:00"))
+        sunset_dt = datetime.fromisoformat(sunset_utc.replace("Z", "+00:00"))
 
-        return {
-            'Sunrise UTC': sunrise_utc,
-            'Sunset UTC': sunset_utc,
-            'Sunrise Local': sunrise_datetime,
-            'Sunset Local': sunset_datetime
+        # Get the correct time zone from coordinates
+        timezone_finder = TimezoneFinder()
+        timezone_str = timezone_finder.timezone_at(lat=latitude, lng=longitude)
+
+        if timezone_str is not None:
+            local_tz = pytz.timezone(timezone_str)
+
+            # Convert to local time
+            sunrise_local = sunrise_dt.astimezone(local_tz).strftime("%Y-%m-%d %H:%M:%S %Z")
+            sunset_local = sunset_dt.astimezone(local_tz).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+            return {
+                'Sunrise Local': sunrise_local,
+                'Sunset Local': sunset_local,
             }
+        else:
+            raise Exception("Unable to determine the time zone.")
+            
     else:
         return None
 
@@ -165,8 +178,8 @@ def update_weather():
         if sunrise_sunset_data:
             weather_info.set(
                 weather_info.get() +
-                f"Sunrise: {sunrise_sunset_data['Sunrise Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
-                f"Sunset: {sunrise_sunset_data['Sunset Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
+                f"Sunrise (Local): {sunrise_sunset_data['Sunrise Local']}\n"
+                f"Sunset (Local): {sunrise_sunset_data['Sunset Local']}\n"
             )
 
         # Fetch weather forecast data
