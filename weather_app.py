@@ -5,6 +5,13 @@ from datetime import datetime
 import pytz
 from timezonefinder import TimezoneFinder
 
+# Create the main GUI window
+window = tk.Tk()
+window.title("Weather App")
+
+# Create a variable for temeprature units
+temperature_unit = tk.StringVar(value="Celsius") #Default to Celsius
+
 #OpenWeather API Key
 WEATHER_API_KEY = "4280cf0c7e000e8ae9a42913aa06e1c5"
 
@@ -20,8 +27,9 @@ SUNRISE_SUNSET_BASE_URL = "https://api.sunrise-sunset.org/json?"
 
 #Fetch weather data
 def get_weather(city):
+    unit = "metric" if temperature_unit.get() == "Celsius" else "imperial"
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
-    complete_url = f"{base_url}q={city}&appid={WEATHER_API_KEY}&units=metric"
+    complete_url = f"{base_url}q={city}&appid={WEATHER_API_KEY}&units={unit}"
     response = requests.get(complete_url)
 
     if response.status_code == 200:
@@ -140,7 +148,7 @@ def get_sunrise_sunset(latitude, longitude):
             }
         else:
             raise Exception("Unable to determine the time zone.")
-            
+
     else:
         return None
 
@@ -156,6 +164,7 @@ def update_weather():
     weather_data = get_weather(city)
 
     if weather_data:
+        unit_symbol = "°C" if temperature_unit.get() == "Celsius" else "°F"
         temperature = weather_data['Temperature']
         pressure = weather_data['Pressure']
         humidity = weather_data['Humidity']
@@ -167,7 +176,7 @@ def update_weather():
 
         weather_info.set(
             f"Weather in {city}:\n"
-            f"Temperature: {weather_data['Temperature']} °C\n"
+            f"Temperature: {temperature} {unit_symbol}\n"
             f"Pressure: {weather_data['Pressure']} hPa\n"
             f"Humidity: {weather_data['Humidity']} %\n"
             f"Description: {weather_data['Weather Description']}\n"
@@ -204,13 +213,13 @@ def update_weather():
         messagebox.showerror("Error", "Could not retrieve weather data.")
 
 
-# Create the main GUI window
-window = tk.Tk()
-window.title("Weather App")
-
 # Create an entry widget for city name
 city_entry = tk.Entry(window)
 city_entry.pack()
+
+# Dropdown menu for temperature unit selection
+unit_menu = tk.OptionMenu(window, temperature_unit, "Celsius", "Fahrenheit")
+unit_menu.pack()
 
 # Create a button to fetch weather information
 get_weather_button = tk.Button(window, text="Get Weather", command=update_weather)
