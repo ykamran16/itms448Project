@@ -1,3 +1,5 @@
+import tkinter as tk
+from tkinter import messagebox
 import requests
 from datetime import datetime
 import pytz
@@ -130,52 +132,56 @@ def get_sunrise_sunset(latitude, longitude):
         return None
 
 
-#Test the function with Chicago
-if __name__ == "__main__":
-    city = "Chicago"
+# Function to update the GUI with weather data and other information
+def update_weather():
+    city = city_entry.get()
+    if not city:
+        messagebox.showwarning("Invalid Input", "Please enter a city name")
+        return
+
     weather_data = get_weather(city)
-    air_quality_data = get_air_quality(city)
-    forecast_data = get_forecast(city)
-    weather_news_data = get_weather_news(city)
 
     if weather_data:
         latitude = weather_data['Latitude']
         longitude = weather_data['Longitude']
 
-        print(f"Weather in {city}:")
-        print(f"Temperature: {weather_data['Temperature']} °C")
-        print(f"Pressure: {weather_data['Pressure']} hPa")
-        print(f"Humidity: {weather_data['Humidity']} %")
-        print(f"Description: {weather_data['Weather Description']}")
-
         sunrise_sunset_data = get_sunrise_sunset(latitude, longitude)
+
+        weather_info.set(
+            f"Weather in {city}:\n"
+            f"Temperature: {weather_data['Temperature']} °C\n"
+            f"Pressure: {weather_data['Pressure']} hPa\n"
+            f"Humidity: {weather_data['Humidity']} %\n"
+            f"Description: {weather_data['Weather Description']}\n"
+        )
+
         if sunrise_sunset_data:
-            print(f"Sunrise and Sunset in {city}:")
-            print(f"Sunrise (UTC): {sunrise_sunset_data['Sunrise UTC']}")
-            print(f"Sunrise (Local): {sunrise_sunset_data['Sunrise Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}")
-            print(f"Sunset (UTC): {sunrise_sunset_data['Sunset UTC']}")
-            print(f"Sunset (Local): {sunrise_sunset_data['Sunset Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}")
-        else:
-            print(f"Could not retrieve sunrise and sunset times for {city}.")
-    else:
-        print(f"Could not retrieve weather data for {city}.")
+            weather_info.set(
+                weather_info.get() +
+                f"Sunrise: {sunrise_sunset_data['Sunrise Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
+                f"Sunset: {sunrise_sunset_data['Sunset Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
+            )
 
-    if air_quality_data:
-            print(f"Air Quality Index in {city}: {air_quality_data['Air Quality Index']}")
     else:
-        print(f"Could not retrieve air quality data for {city}.")
+        messagebox.showerror("Error", "Could not retrieve weather data.")
 
-    if forecast_data:
-        print(f"3-Day Weather Forecast in {city}:")
-        for i, forecast in enumerate(forecast_data, 1):
-            print(f"Day {i}: Temperature {forecast['Temperature']} °C, Description: {forecast['Description']}")
-    else:
-        print(f"Could not retrieve weather forecast data for {city}.")
 
-    if weather_news_data:
-        print(f"Weather-related news in {city}:")
-        for i, news in enumerate(weather_news_data, 1):
-            print(f"Article {i}: {news['Title']}")
-            print(f"  Description: {news['Description']}")
-    else:
-        print(f"Could not retrieve weather-related news for {city}.")
+# Create the main GUI window
+window = tk.Tk()
+window.title("Weather App")
+
+# Create an entry widget for city name
+city_entry = tk.Entry(window)
+city_entry.pack()
+
+# Create a button to fetch weather information
+get_weather_button = tk.Button(window, text="Get Weather", command=update_weather)
+get_weather_button.pack()
+
+# Create a label to display weather information
+weather_info = tk.StringVar()
+weather_label = tk.Label(window, textvariable=weather_info, justify=tk.LEFT)
+weather_label.pack()
+
+#Start the GUI event loop
+window.mainloop()
