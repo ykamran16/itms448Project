@@ -134,18 +134,23 @@ def get_sunrise_sunset(latitude, longitude):
 
 # Function to update the GUI with weather data and other information
 def update_weather():
-    city = city_entry.get()
+    city = city_entry.get() # Get city name
     if not city:
         messagebox.showwarning("Invalid Input", "Please enter a city name")
         return
 
+    # Fetch weather data
     weather_data = get_weather(city)
 
     if weather_data:
+        temperature = weather_data['Temperature']
+        pressure = weather_data['Pressure']
+        humidity = weather_data['Humidity']
+        weather_desc = weather_data['Weather Description']
+
         latitude = weather_data['Latitude']
         longitude = weather_data['Longitude']
 
-        sunrise_sunset_data = get_sunrise_sunset(latitude, longitude)
 
         weather_info.set(
             f"Weather in {city}:\n"
@@ -155,12 +160,32 @@ def update_weather():
             f"Description: {weather_data['Weather Description']}\n"
         )
 
+        #Fetch and display sunrise/sunset times
+        sunrise_sunset_data = get_sunrise_sunset(latitude, longitude)
         if sunrise_sunset_data:
             weather_info.set(
                 weather_info.get() +
                 f"Sunrise: {sunrise_sunset_data['Sunrise Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
                 f"Sunset: {sunrise_sunset_data['Sunset Local'].strftime('%Y-%m-%d %H:%M:%S %Z')}\n"
             )
+
+        # Fetch weather forecast data
+        forecast_data = get_forecast(city)
+        if forecast_data:
+            for i, forecast in enumerate(forecast_data, 1):
+                weather_info.set(
+                    weather_info.get() +
+                    f"Day {i}: Temperature: {forecast['Temperature']} °C, Description: {forecast['Description']}\n"
+                )
+
+        # Fetch weather-related news
+        news_data = get_weather_news(city)
+        if news_data:
+            news_info = ""
+            for i, news in enumerate(news_data, 1):
+                news_info += f"Article {i}: {news['Title']}\n  Description: {news['Description']}\n"
+
+            news_var.set(news_info)
 
     else:
         messagebox.showerror("Error", "Could not retrieve weather data.")
@@ -182,6 +207,11 @@ get_weather_button.pack()
 weather_info = tk.StringVar()
 weather_label = tk.Label(window, textvariable=weather_info, justify=tk.LEFT)
 weather_label.pack()
+
+# Create a label to display news articles
+news_var = tk.StringVar()
+news_label = tk.Label(window, textvariable=news_var, justify=tk.LEFT)
+news_label.pack()
 
 #Start the GUI event loop
 window.mainloop()
