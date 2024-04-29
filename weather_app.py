@@ -74,8 +74,9 @@ def get_air_quality(city):
 
 #Fetch 3-day forecast data
 def get_forecast(city):
+    unit = "metric" if temperature_unit.get() == "Celsius" else "imperial"
     base_url = "http://api.openweathermap.org/data/2.5/forecast?"
-    complete_url = f"{base_url}q={city}&appid={WEATHER_API_KEY}&units=metric"
+    complete_url = f"{base_url}q={city}&appid={WEATHER_API_KEY}&units={unit}"
     response = requests.get(complete_url)
 
     if response.status_code == 200:
@@ -195,9 +196,11 @@ def update_weather():
         forecast_data = get_forecast(city)
         if forecast_data:
             for i, forecast in enumerate(forecast_data, 1):
+                forecast_temp = forecast['Temperature']
                 weather_info.set(
                     weather_info.get() +
-                    f"Day {i}: Temperature: {forecast['Temperature']} °C, Description: {forecast['Description']}\n"
+                    f"Day {i}: Temperature: {forecast_temp} {unit_symbol}, "
+                    f"Description: {forecast['Description']}\n"
                 )
 
         # Fetch weather-related news
